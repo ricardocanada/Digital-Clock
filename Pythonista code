@@ -1,0 +1,54 @@
+# Digital Clock
+# by Richard Bourne
+#
+# A simple clock that employs time functions and string formatting
+# It has a bright-dim touch toggle function
+
+from time import strftime, localtime
+from scene import *
+from string import *
+Opacity = 1 #defaults to bright. Lower values dim the display
+Military = False #defaults to 12-hour display, True gives a 4-hour display
+FontName = 'Helvetica Bold' #Use other TTF fonts, eg. Arial, Courier, etc
+FontSize = 240 #Experiment with values. I found Arial worked well at 240, Courier at 210
+
+class Digiclock (Scene):
+	
+	def should_rotate(self, orientation):
+		return False #optimized for landscape display
+	
+	def draw(self):
+		background(0, 0, 0) #black
+		Separator = ':'
+		Indicator = 'AM'
+		DayName = strftime("%A", localtime()) #get the full day name (%a gets the 3-letter abbreviation)
+		Date = strftime("%b %d, %Y", localtime()) #get the month, date and year
+		Hour = strftime("%H", localtime()) #get the hour
+		IntHour = int(float(Hour)) #convert the hour to an integer
+		if Military:
+			Indicator = '' #no AM/PM indicator with 24-hour clock
+			Separator = '' #also no separator between hours and minutes
+		if IntHour < 10:
+			Hour = replace(Hour, '0', '') #strip the leading zero
+		if IntHour > 12 and not Military: #convert 24 hour to 12 hour clock
+			IntHour = IntHour - 12 #new hour value
+			Indicator = 'PM'
+			Hour = str(IntHour) #new hour value converted to string
+		MinsSeconds = strftime("%M:%S", localtime()) #extract minutes and seconds as a string
+		tint(0, 1, 1, Opacity) #set cyan to display time
+		text(Indicator, FontName, FontSize/3, x = 760.0 + len(Hour)*60, y = 650.0, alignment = 5)
+		text(Hour + Separator + MinsSeconds, FontName, FontSize, x = 120 - len(Hour)*35, y = 500.0, alignment = 6) #font size 240
+		tint(0, 1, 0, Opacity) #set green to display day
+		text(DayName, FontName, FontSize/2, x = 500.0, y = 290.0, alignment=5)
+		tint(1, .5, 1, Opacity) #set light magenta to display date and year
+		text(Date, FontName, FontSize/2, x = 500.0, y = 150.0, alignment=5)
+		#I usually set text aligment to 5 so that text self-centers. That works well when text changes infrequently or never, but it looks terrible with frequent changes. Every second, all of the time digits shifted sideways as they re-centred to adjust for the width of the changed digits! Aligning the the text from its left side (6) keeps it much steadier.
+		
+	def touch_began(self, touch): #touch anywhere on screen to toggle the brightness
+		global Opacity
+		if Opacity == .2:
+			Opacity = 1  #set alpha value more opaque, so the display is brighter for daytime viewing
+		else:
+			Opacity = .2 #set alpha value more transparent, so the display is much dimmer for nighttime viewing
+			
+run(Digiclock(), LANDSCAPE)
